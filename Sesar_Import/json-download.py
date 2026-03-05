@@ -78,6 +78,76 @@ def check_for_parent(data):
     return None  # no parent found
 
 
+
+def get_sibling_igsns(data):
+    """Extract a list of sibling IGSNs if they exist"""
+    
+    # create an empty list to store sibling igsns
+    sibling_igsns = []
+    
+    try:
+        # navigate through the nested json structure to reach siblings
+        sibling_info = data.get("sample", {}).get("siblings", {})
+        
+        # check if sibling info contains samples
+        if sibling_info and "samples" in sibling_info:
+            samples = sibling_info["samples"]
+            
+            # check if there is a sample field
+            if "sample" in samples:
+                sibling_data = samples["sample"]
+                
+                # if it is a list, loop through each sibling
+                if isinstance(sibling_data, list):
+                    for s in sibling_data:
+                        if isinstance(s, dict) and "igsn" in s:
+                            sibling_igsns.append(s["igsn"])
+                
+                # if it is a dictionary (only one sibling)
+                elif isinstance(sibling_data, dict) and "igsn" in sibling_data:
+                    sibling_igsns.append(sibling_data["igsn"])
+                    
+    except (AttributeError, KeyError, TypeError):
+        pass
+    
+    return sibling_igsns
+
+
+def download_multiple_samples(igsn_list):
+    """Download multiple samples and report any failures"""
+    
+    # keep track of successful and failed downloads
+    success = []
+    failed = []
+    
+    # loop through each igsn in the list
+    for igsn in igsn_list:
+        print(f"\nDownloading sibling {igsn}...")
+        
+        data = download_sample(igsn)
+        
+        # check if download succeeded
+        if data:
+            success.append(igsn)
+        else:
+            failed.append(igsn)
+    
+    # after attempting all downloads, report results
+    print("\nSibling download summary:")
+    print(f"Successfully downloaded: {len(success)}")
+    
+    # if any failed, print them so the user knows
+    if failed:
+        print(f"Failed downloads: {len(failed)}")
+        for f in failed:
+            print(f"  - {f}")
+    
+    return success, failed
+
+
+
+
+
 ########################################################################################################################
 #main
 def main():
@@ -123,16 +193,45 @@ def main():
                                 print(f"\nDownloading grandparent {grandparent_igsn}...")
                                 download_sample(grandparent_igsn)
                                 break  #exit the grandparent loop
+                           
                             elif choice2 in ['no', 'n']:
                                 print("Skipping grandparent sample.")
                                 break  #exit the grandparent loop
+
+                            
+
                             else:
                                 print("Please enter 'yes' or 'no'.")
                 break  #exit the parent loop
                 
+            # elif choice in ['no', 'n']:  # If they say no
+            #     print("Skipping parent sample.")
+            #     break  # exit the loop
             elif choice in ['no', 'n']:  # If they say no
                 print("Skipping parent sample.")
-                break  # exit the loop
+                
+                # check if the sample has siblings
+                sibling_igsns = get_sibling_igsns(data)
+                
+                # if siblings exist, ask if user wants to download them
+                if sibling_igsns:
+                    print(f"\nFound {len(sibling_igsns)} sibling samples.")
+                    
+                    while True:
+                        sibling_choice = input("Would you like to download the siblings instead? (yes/no): ").strip().lower()
+                        
+                        if sibling_choice in ['yes', 'y']:
+                            download_multiple_samples(sibling_igsns)
+                            break
+                        
+                        elif sibling_choice in ['no', 'n']:
+                            print("Skipping sibling downloads.")
+                            break
+                        
+                        else:
+                            print("Please enter 'yes' or 'no'.")
+                
+                break
                 
             else:  # If they type something else
                 print("Please enter 'yes' or 'no'.")
