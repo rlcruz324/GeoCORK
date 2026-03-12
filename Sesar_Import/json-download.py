@@ -1,15 +1,16 @@
-# Import necessary libraries/modules
-import requests  # this library allows us to make HTTP requests to download data from websites
-import json      # this library helps us work with JSON data (a common data format)
-import os        # this library helps interact with the operating system (though not used here)
+import requests  # HTTP requests to download data from websites
+import json      
+import os        # probs don't need this.
 
-# the script has several functions to download sample data, check for parent samples, and handle user interactions.
-# this script allows the user to input an IGSN (a unique identifier for a geological sample),
+# the code has several functions to download sample data, check for parent samples, and handle user interactions.
+# this code allows the user to input an IGSN (a unique identifier for a geological sample),
 # retrieves the corresponding sample data from the SESAR web service, and saves it to a JSON file.
 # It also checks if the sample has a parent sample and offers the option to download it as well.
-
+# 
 #####################################################################################################################################
 #functions
+#####################################################################################################################################
+
 def download_sample(igsn):
     """Download a single sample by IGSN and save to JSON file"""
     
@@ -145,11 +146,21 @@ def download_multiple_samples(igsn_list):
     return success, failed
 
 
+#Show the whole hierarchy (tree structure)
+#Allow users to check which they want
+
+#In UI there is ItemID, ParentID, ParentRow, Item Name
+#ItemID is current IGSN
+#ParentID ParentID
+#Is it the first child or second child
+#Pandas Data Frame for now
 
 
 
 ########################################################################################################################
+
 #main
+########################################################################################################################
 def main():
     
     # ask the user for an IGSN and remove any extra spaces
@@ -197,8 +208,6 @@ def main():
                             elif choice2 in ['no', 'n']:
                                 print("Skipping grandparent sample.")
                                 break  #exit the grandparent loop
-
-                            
 
                             else:
                                 print("Please enter 'yes' or 'no'.")
